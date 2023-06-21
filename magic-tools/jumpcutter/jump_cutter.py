@@ -11,6 +11,8 @@ from shutil import copyfile, rmtree
 import os
 import argparse
 from pytube import YouTube
+import streamlit as st
+import io
 
 
 
@@ -191,9 +193,24 @@ def jump_cutter(input_file, output_file, silent_threshold=0.05, sounded_speed=1.
     '''
 
 
-    #cleaning up
-    command = "ffmpeg -framerate "+str(frameRate)+" -i "+TEMP_FOLDER+"/newFrame%06d.jpg -i "+TEMP_FOLDER+"/audioNew.wav -strict -2 "+OUTPUT_FILE
+   
+# Modified to write to a temp file first
+    TEMP_OUTPUT = TEMP_FOLDER + "/output.mp4"
+    command = "ffmpeg -framerate "+str(frameRate)+" -i "+TEMP_FOLDER+"/newFrame%06d.jpg -i "+TEMP_FOLDER+"/audioNew.wav -strict -2 "+TEMP_OUTPUT
     subprocess.call(command, shell=True)
+
+    # Read the temp output file into memory as bytes
+    with open(TEMP_OUTPUT, 'rb') as f:
+        bytes = f.read()
+
+    # Use Streamlit to create a download button for the file
+    st.download_button(
+        label="Download video",
+        data=bytes,
+        file_name=OUTPUT_FILE,
+        mime='video/mp4',
+    )
+
 
     deletePath(TEMP_FOLDER)
 

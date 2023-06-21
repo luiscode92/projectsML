@@ -90,8 +90,10 @@ def jump_cutter(input_file, output_file, silent_threshold=0.05, sounded_speed=1.
         subprocess.call(command, shell=True)
 
         command = "ffmpeg -i "+INPUT_FILE+" -ab 160k -ac 2 -ar "+str(SAMPLE_RATE)+" -vn "+TEMP_FOLDER+"/audio.wav"
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output, _ = process.communicate()
+        st.write(output.decode())
 
-        subprocess.call(command, shell=True)
 
         command = "ffmpeg -i "+TEMP_FOLDER+"/input.mp4 2>&1"
         f = open(TEMP_FOLDER+"/params.txt", "w")

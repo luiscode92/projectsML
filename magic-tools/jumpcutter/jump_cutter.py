@@ -198,7 +198,7 @@ def jump_cutter(input_file, output_file, silent_threshold=0.05, sounded_speed=1.
 
 
         # Modified to write to a temp file first
-        TEMP_OUTPUT = TEMP_FOLDER + "/output.mp4"
+        TEMP_OUTPUT = TEMP_FOLDER + "/output." + INPUT_FILE.split('.')[-1]
         command = "ffmpeg -framerate "+str(frameRate)+" -i "+TEMP_FOLDER+"/newFrame%06d.jpg -i "+TEMP_FOLDER+"/audioNew.wav -strict -2 "+TEMP_OUTPUT
         subprocess.call(command, shell=True)
 

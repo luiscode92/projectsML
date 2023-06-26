@@ -6,3 +6,4 @@ pytube
 streamlit
 moviepy
 ffmpeg-python
+ffmpeg

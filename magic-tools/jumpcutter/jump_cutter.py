@@ -16,7 +16,7 @@ import io
 import tempfile
 
 
-def jump_cutter(input_file, output_file, silent_threshold=0.05, sounded_speed=1.00, silent_speed=5.00, frame_margin=1, sample_rate=44100, frame_rate=30, frame_quality=3):
+def jump_cutter(input_file, output_file, silent_threshold, sounded_speed=1.00, silent_speed=5.00, frame_margin=1, sample_rate=44100, frame_rate=30, frame_quality=3):
     # Your original script goes here, but replace the uses of args.something with corresponding parameters
 
     #defining utility funcitons
@@ -92,7 +92,7 @@ def jump_cutter(input_file, output_file, silent_threshold=0.05, sounded_speed=1.
         command = "ffmpeg -i "+INPUT_FILE+" -ab 160k -ac 2 -ar "+str(SAMPLE_RATE)+" -vn "+TEMP_FOLDER+"/audio.wav"
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output, _ = process.communicate()
-        st.write(output.decode())
+        #st.write(output.decode())
 
 
         command = "ffmpeg -i "+TEMP_FOLDER+"/input.mp4 2>&1"

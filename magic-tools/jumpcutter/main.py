@@ -5,6 +5,7 @@ from jump_cutter import jump_cutter
 
 st.title("Cortar silencios - Demo")
 uploaded_file = st.file_uploader("Cargar video en")
+silent_threshold = st.slider("Sensibilidad del corte en el video", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
 
 if uploaded_file is not None:
     # Get the file extension
@@ -20,6 +21,7 @@ if st.button('Cortar video'):
     jump_cutter(
         input_file=input_file,
         output_file=f"output.{file_extension}",
+        silent_threshold=silent_threshold,
     )
 
 # Add a lot of space before the footer

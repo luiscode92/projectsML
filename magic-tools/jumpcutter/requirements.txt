@@ -7,3 +7,6 @@ streamlit
 moviepy
 ffmpeg-python
 ffmpeg
+fastapi
+uvicorn
+python-multipart

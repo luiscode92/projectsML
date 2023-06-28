@@ -1,40 +1,36 @@
-import streamlit as st
-import base64
-import moviepy.editor as mpy
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import FileResponse
 from jump_cutter import jump_cutter
+import os
 
-st.title("Cortar silencios - Demo")
-uploaded_file = st.file_uploader("Cargar video en")
-silent_threshold = st.slider("Sensibilidad del corte en el video", min_value=0.0, max_value=1.0, value=0.05, step=0.01)
+app = FastAPI()
 
-if uploaded_file is not None:
-    # Get the file extension
-    file_extension = uploaded_file.name.split(".")[-1]
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    # create a temporary file and write the uploaded file's content to it
+    with open(f"temp/{file.filename}", "wb") as buffer:
+        buffer.write(await file.read())
 
-if st.button('Cortar video'):
-    # save the uploaded file to the local filesystem with the correct extension
-    input_file = f"input.{file_extension}"
-    with open(input_file, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    return {"filename": file.filename}
 
-    # call the function with the correct extension for the output
+@app.post("/process_video/")
+async def process_video(filename: str, silent_threshold: float):
+    # input and output file paths
+    input_file = f"temp/{filename}"
+    output_file = f"temp/output_{filename}"
+    
+    # Call the function with the correct extension for the output
     jump_cutter(
         input_file=input_file,
-        output_file=f"output.{file_extension}",
-        silent_threshold=silent_threshold,
+        output_file=output_file,
+        silent_threshold=silent_threshold
     )
+    
+    # After processing the video, return it as a file download response
+    response = FileResponse(output_file, media_type='application/octet-stream')
 
-# Add a lot of space before the footer
-for _ in range(25):
-    st.write("\n")
-
-# Then, add your footer
-st.markdown(
-    """
-    <hr/>
-    <p style='text-align: center; color: grey;'>This demo was made for Ana Coral & Jonathan Rengifo, created by <a href='https://luiscode92.github.io/#/' target='_blank'><b>Luis Sanjuan</b></a>.</p>
-    <p style='text-align: center; color: grey;'>Feel free to reach out to me for any queries or feedback.</p>
-    <p style='text-align: center; color: grey;'><small>MIT License</small></p>
-    """,
-    unsafe_allow_html=True,
-)
+    # Clean up the input and output files from the disk after sending the response
+    os.remove(input_file)
+    os.remove(output_file)
+    
+    return response

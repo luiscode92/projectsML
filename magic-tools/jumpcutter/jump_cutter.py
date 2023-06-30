@@ -65,7 +65,7 @@ def jump_cutter(input_file, output_file, silent_threshold, sounded_speed=1.00, s
     SAMPLE_RATE = sample_rate
     SILENT_THRESHOLD = silent_threshold
     FRAME_SPREADAGE = frame_margin
-    NEW_SPEED = [silent_speed, sounded_speed]
+    NEW_SPEED = [1.00, 1.00]
     INPUT_FILE = input_file
 
     FRAME_QUALITY = frame_quality
@@ -154,11 +154,7 @@ def jump_cutter(input_file, output_file, silent_threshold, sounded_speed=1.00, s
             sFile = TEMP_FOLDER+"/tempStart.wav"
             eFile = TEMP_FOLDER+"/tempEnd.wav"
             wavfile.write(sFile,SAMPLE_RATE,audioChunk)
-            with WavReader(sFile) as reader:
-                with WavWriter(eFile, reader.channels, reader.samplerate) as writer:
-                    tsm = phasevocoder(reader.channels, speed=NEW_SPEED[int(chunk[2])])
-                    tsm.run(reader, writer)
-            _, alteredAudioData = wavfile.read(eFile)
+            alteredAudioData = audioChunk
             leng = alteredAudioData.shape[0]
             endPointer = outputPointer+leng
             outputAudioData = np.concatenate((outputAudioData,alteredAudioData/maxAudioVolume))
@@ -178,7 +174,7 @@ def jump_cutter(input_file, output_file, silent_threshold, sounded_speed=1.00, s
             startOutputFrame = int(math.ceil(outputPointer/samplesPerFrame))
             endOutputFrame = int(math.ceil(endPointer/samplesPerFrame))
             for outputFrame in range(startOutputFrame, endOutputFrame):
-                inputFrame = int(chunk[0]+NEW_SPEED[int(chunk[2])]*(outputFrame-startOutputFrame))
+                inputFrame = outputFrame
                 didItWork = copyFrame(inputFrame,outputFrame)
                 if didItWork:
                     lastExistingFrame = inputFrame
@@ -203,20 +199,14 @@ def jump_cutter(input_file, output_file, silent_threshold, sounded_speed=1.00, s
         subprocess.call(command, shell=True)
 
         # Read the temp output file into memory as bytes
-        with open(TEMP_OUTPUT, 'rb') as f:
-            bytes = f.read()
+        try:
+            with open(TEMP_OUTPUT, 'rb') as f:
+                output_bytes = f.read()
 
-        # Use Streamlit to create a download button for the file
-        st.download_button(
-            label="Download video",
-            data=bytes,
-            file_name=OUTPUT_FILE,
-            mime='video/mp4',
-        )
-
-
-        deletePath(TEMP_FOLDER)
-
-
+            # Instead of using Streamlit to create a download button for the file, we'll return the video file data.
+            return output_bytes
+        finally:
+            # Always run cleanup code even if return statement was executed
+            deletePath(TEMP_FOLDER)
 
 

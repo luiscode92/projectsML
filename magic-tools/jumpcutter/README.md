@@ -1,25 +1,20 @@
-# jumpcutter
-Automatically edits videos. Explanation here: https://www.youtube.com/watch?v=DQ8orIurGxw
+Video Processing Server using FastAPI
+The provided Python scripts, main.py and jump_cutter.py, jointly create a video processing server using FastAPI.
 
-Go here for a more polished version of this software that my friends and I have been working on fr the last year or so: https://jumpcutter.com/
+Overview
+main.py: This script sets up a FastAPI server and exposes two endpoints for video processing:
 
-Since my GitHub is more like a dumping ground or personal journal, I'm not going to be actively updating this GitHub repo. But if you do want a version of jumpcutter that is actively being worked on, please do check on the version at https://jumpcutter.com/! There's way more developers fixing bugs and adding new features to that tool, and there's a developer's Discord server to discuss anything JC-related, so go check it out!
+POST /upload/: This endpoint is used for uploading a video file. The server saves the uploaded file temporarily and responds with the filename.
 
-## Some heads-up:
+POST /process_video/: This endpoint takes a filename (representing a previously uploaded file) and a silent_threshold parameter. It uses these parameters to call the jump_cutter function from the jump_cutter.py module for processing the video. The processed video is then returned to the client as a downloadable file. Post processing, all temporary files are deleted from the server.
 
-It uses Python 3.
+jump_cutter.py: This module includes the jump_cutter function, which processes a video file based on provided parameters. The function uses various techniques such as Fast Fourier Transform, phase vocoder time stretching, and audio level analysis to remove or speed up sections of the video where the audio volume falls below a certain threshold. The goal is to trim less significant sections from the video, particularly parts with long pauses or silence.
 
-It works on Ubuntu 16.04 and Windows 10. (It might work on other OSs too, we just haven't tested it yet.)
-
-This program relies heavily on ffmpeg. It will start subprocesses that call ffmpeg, so be aware of that!
-
-As the program runs, it saves every frame of the video as an image file in a
-temporary folder. If your video is long, this could take a LOT of space.
-I have processed 17-minute videos completely fine, but be wary if you're gonna go longer.
-
-I want to use pyinstaller to turn this into an executable, so non-techy people
-can use it EVEN IF they don't have Python and all those libraries. Jabrils 
-recommended this to me. However, my pyinstaller build did not work. :( HELP
-
-## Building with nix
-`nix-build` to get a script with all the libraries and ffmpeg, `nix-build -A bundle` to get a single binary.
+Detailed Workflow of jump_cutter
+The function begins by verifying the input video file and creating a temporary folder for further processing.
+The ffmpeg tool is used to extract individual frames and audio from the input video.
+The audio data is read and the volume level is analyzed for each frame of the video.
+Frames with volume levels below the silent_threshold are marked as "silent". Frames within a certain margin of a "silent" frame also receive the "silent" tag.
+The function then processes the frames again, creating a new audio track and set of video frames. If a frame was marked as "silent", it's either skipped or its corresponding audio is sped up, based on the sounded_speed and silent_speed parameters.
+After all the frames have been processed, ffmpeg recombines the new frames and audio into a processed video file.
+The function concludes by deleting the temporary folder and its contents, and returns the processed video data as a byte string.

@@ -1,36 +1,48 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles  # import StaticFiles
 from jump_cutter import jump_cutter
 import os
 
 app = FastAPI()
 
+# Mount the static files directory
+app.mount("/temp", StaticFiles(directory="temp"), name="temp")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
-    # create a temporary file and write the uploaded file's content to it
-    with open(f"temp/{file.filename}", "wb") as buffer:
-        buffer.write(await file.read())
+    try:
+        if not os.path.exists('temp'):
+            os.makedirs('temp')
+
+        with open(f"temp/{file.filename}", "wb") as buffer:
+            buffer.write(await file.read())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     return {"filename": file.filename}
 
-@app.post("/process_video/")
+@app.get("/process_video/{filename}")
 async def process_video(filename: str, silent_threshold: float):
-    # input and output file paths
-    input_file = f"temp/{filename}"
-    output_file = f"temp/output_{filename}"
-    
-    # Call the function with the correct extension for the output
-    jump_cutter(
-        input_file=input_file,
-        output_file=output_file,
-        silent_threshold=silent_threshold
-    )
-    
-    # After processing the video, return it as a file download response
-    response = FileResponse(output_file, media_type='application/octet-stream')
+    try:
+        input_file = f"temp/{filename}"
+        output_file = f"temp/output_file"
 
-    # Clean up the input and output files from the disk after sending the response
-    os.remove(input_file)
-    os.remove(output_file)
+        jump_cutter(
+            input_file=input_file,
+            output_file=output_file,
+            silent_threshold=silent_threshold
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
-    return response
+    return {"output_file": output_file}

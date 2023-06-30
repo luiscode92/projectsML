@@ -16,6 +16,11 @@
             Upload
           </button>
         </div>
+        <div v-if="processedFile">
+          <a :href="processedFile" download class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            Download Processed Video
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -26,6 +31,7 @@ export default {
   data() {
     return {
       selectedFile: null,
+      processedFile: null,
     };
   },
   methods: {
@@ -48,6 +54,21 @@ export default {
         });
         const data = await response.json();
         console.log(data);
+
+        // process the uploaded video
+        await this.processVideo(data.filename);
+      } catch (error) {
+        console.error("An error occurred:", error);
+      }
+    },
+    async processVideo(filename) {
+      const silent_threshold = 0.3;  // change this as needed
+
+      try {
+        const response = await fetch(`http://localhost:8000/process_video/${filename}?silent_threshold=${silent_threshold}`);
+        const data = await response.json();
+
+        this.processedFile = `http://localhost:8000/${data.output_file}`;
       } catch (error) {
         console.error("An error occurred:", error);
       }
